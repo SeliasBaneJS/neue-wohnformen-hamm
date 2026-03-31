@@ -25,7 +25,27 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+      <head>
+        <script src="https://identity.netlify.com/v1/netlify-identity-widget.js" defer></script>
+      </head>
+      <body>
+        {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (window.netlifyIdentity) {
+                window.netlifyIdentity.on("init", function(user) {
+                  if (!user) {
+                    window.netlifyIdentity.on("login", function() {
+                      document.location.href = "/admin/";
+                    });
+                  }
+                });
+              }
+            `,
+          }}
+        />
+      </body>
     </html>
   );
 }
