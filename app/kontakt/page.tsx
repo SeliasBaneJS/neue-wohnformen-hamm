@@ -1,5 +1,15 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Kontakt",
+  description: "Kontaktieren Sie den Verein zur Förderung neuer Wohnformen in Hamm e.V. — Wir freuen uns auf Ihre Anfrage zum Mehrgenerationenwohnen.",
+  openGraph: {
+    title: "Kontakt — Neue Wohnformen Hamm",
+    description: "Nehmen Sie Kontakt mit uns auf — Fragen zum generationenübergreifenden Wohnen in Hamm.",
+  },
+};
 
 export default function Kontakt() {
   return (

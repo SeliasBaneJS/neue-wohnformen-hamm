@@ -1,6 +1,16 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getMarkdownData } from "@/lib/markdown";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Über uns",
+  description: "Erfahren Sie mehr über den Verein zur Förderung neuer Wohnformen in Hamm e.V., unsere Ziele, unsere Vorsitzende und unser Konzept für generationenübergreifendes Wohnen.",
+  openGraph: {
+    title: "Über uns — Neue Wohnformen Hamm",
+    description: "Unser Verein fördert generationenübergreifendes Wohnen in Hamm seit 2013.",
+  },
+};
 
 export default async function About() {
   const pageData = await getMarkdownData('pages', 'about');

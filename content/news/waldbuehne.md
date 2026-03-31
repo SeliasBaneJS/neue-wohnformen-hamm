@@ -1,6 +1,10 @@
 ---
 title: "Besuch der Waldbühne Heessen"
 date: "2025-08-02"
+gallery:
+  - /images/uploads/WhatsApp Image 2025-08-05 at 11.54.10.jpeg
+  - /images/uploads/WhatsApp Image 2025-08-05 at 11.54.10(1).jpeg
+  - /images/uploads/WhatsApp Image 2025-08-05 at 11.54.10(2).jpeg
 ---
 Am 2. August 2025 besuchten einige Interessierte die Waldbühne Heessen, die im gleichnamigen Wald liegt.
 

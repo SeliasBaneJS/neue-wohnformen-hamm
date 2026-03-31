@@ -2,6 +2,16 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ImageCarousel from "@/components/ImageCarousel";
 import { getAllMarkdownFiles, getMarkdownData } from "@/lib/markdown";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Aktuelles & Neuigkeiten",
+  description: "Aktuelle Nachrichten und Veranstaltungen des Vereins zur Förderung neuer Wohnformen in Hamm: Ausflüge, Gemeinschaftsprojekte, Kunstaktionen und mehr.",
+  openGraph: {
+    title: "Aktuelles — Neue Wohnformen Hamm",
+    description: "Neuigkeiten aus unseren Mehrgenerationenhäusern VICANUS I und II in Hamm.",
+  },
+};
 
 export default async function Aktuelles() {
   const files = getAllMarkdownFiles('news');

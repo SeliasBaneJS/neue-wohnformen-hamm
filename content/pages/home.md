@@ -2,7 +2,6 @@
 title: "Verein zur Förderung neuer Wohnformen in Hamm e. V. | Kontakt für innovatives Wohnen"
 hero_images:
   - "/images/uploads/hintergrund1c_824049.jpg"
-  - "/images/uploads/generationen1.png"
   - "/images/uploads/generationen2.png"
 hero_title: "Herzlich willkommen"
 hero_subtitle: "Möchten Sie generationsübergreifend, gemeinschaftlich und stadtnah in individuell zugeschnittenen, barrierefreien Wohnungen mit Jung und Alt zusammenleben?"
