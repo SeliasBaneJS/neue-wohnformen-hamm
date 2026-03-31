@@ -1,6 +1,9 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: SeliasBaneJS/neue-wohnformen-hamm
   branch: main
+  base_url: https://neue-wohnformen-hamm.netlify.app
+  auth_endpoint: .netlify/functions/auth
 
 media_folder: "public/images/uploads"
 public_folder: "/images/uploads"
