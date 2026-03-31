@@ -1,3 +1,8 @@
 [build]
   command = "npm run build"
   publish = "out"
+
+# Formular-Einreichungen per E-Mail weiterleiten
+[forms]
+  [forms.kontakt]
+    success_url = "/kontakt/danke"

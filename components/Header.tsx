@@ -13,6 +13,7 @@ export default function Header() {
           <Link href="/" className="text-white text-decoration-none fw-medium nav-link-custom">Home</Link>
           <Link href="/aktuelles" className="text-white text-decoration-none fw-medium nav-link-custom">Aktuelles</Link>
           <Link href="/about" className="text-white text-decoration-none fw-medium nav-link-custom">Über uns</Link>
+          <Link href="/kontakt" className="text-white text-decoration-none fw-medium nav-link-custom">Kontakt</Link>
           <Link href="/impressum" className="text-white text-decoration-none fw-medium nav-link-custom">Impressum</Link>
         </nav>
       </div>
