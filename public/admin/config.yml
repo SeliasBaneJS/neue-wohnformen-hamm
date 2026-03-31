@@ -1,0 +1,60 @@
+backend:
+  name: github
+  repo: SeliasBaneJS/neue-wohnformen-hamm
+  branch: main
+
+media_folder: "public/images/uploads"
+public_folder: "/images/uploads"
+
+collections:
+  - name: "pages"
+    label: "Seiten (Pages)"
+    files:
+      - file: "content/pages/home.md"
+        label: "Startseite (Home)"
+        name: "home"
+        fields:
+          - {label: "Title", name: "title", widget: "string"}
+          - {label: "Hero Hintergrundbilder", name: "hero_images", widget: "list", field: {label: "Bild", name: "image", widget: "image"}, required: false}
+          - {label: "Hero Titel", name: "hero_title", widget: "string"}
+          - {label: "Hero Untertitel", name: "hero_subtitle", widget: "text"}
+          - {label: "Feature 1 Titel", name: "feature1_title", widget: "string"}
+          - {label: "Feature 1 Text", name: "feature1_text", widget: "text"}
+          - {label: "Feature 2 Titel", name: "feature2_title", widget: "string"}
+          - {label: "Feature 2 Text", name: "feature2_text", widget: "text"}
+          - {label: "Feature 3 Titel", name: "feature3_title", widget: "string"}
+          - {label: "Feature 3 Text", name: "feature3_text", widget: "text"}
+          - label: "Häuser Standorte"
+            name: "houses"
+            widget: "list"
+            required: false
+            fields:
+              - {label: "Bild", name: "image", widget: "image"}
+              - {label: "Titel", name: "title", widget: "string"}
+              - {label: "Informationstext", name: "text", widget: "text"}
+          - {label: "Body", name: "body", widget: "markdown"}
+      - file: "content/pages/about.md"
+        label: "Über uns"
+        name: "about"
+        fields:
+          - {label: "Title", name: "title", widget: "string"}
+          - {label: "Vorsitzende", name: "vorsitzende", widget: "string"}
+          - {label: "Portrait Bild", name: "image", widget: "image", required: false}
+          - {label: "Body", name: "body", widget: "markdown"}
+      - file: "content/pages/impressum.md"
+        label: "Impressum"
+        name: "impressum"
+        fields:
+          - {label: "Title", name: "title", widget: "string"}
+          - {label: "Body", name: "body", widget: "markdown"}
+  - name: "news"
+    label: "Aktuelles (News)"
+    folder: "content/news"
+    create: true
+    slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+    fields:
+      - {label: "Title", name: "title", widget: "string"}
+      - {label: "Publish Date", name: "date", widget: "datetime"}
+      - {label: "Titelbild", name: "image", widget: "image", required: false}
+      - {label: "Bildergalerie", name: "gallery", widget: "list", field: {label: "Bild", name: "image", widget: "image"}, required: false}
+      - {label: "Body", name: "body", widget: "markdown"}

@@ -1,0 +1,138 @@
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Premium Nature / Habitat Palette */
+  --bs-primary: #3A5A40;     /* Deep Sage / Hunter Green */
+  --bs-primary-rgb: 58, 90, 64;
+  --bs-secondary: #588157;   /* Softer Sage */
+  --bs-secondary-rgb: 88, 129, 87;
+  --bs-accent: #DDA15E;      /* Warm Wood / Gold */
+  --bs-accent-rgb: 221, 161, 94;
+  --bs-light: #FAEDCD;       /* Linen / Cream */
+  --bs-dark: #343A40;
+  
+  --bs-body-font-family: 'Outfit', sans-serif;
+  --bs-heading-font-family: 'Outfit', sans-serif;
+  --bs-body-color: #2b2b2b;
+  --bs-body-bg: #F8F9FA;
+}
+
+body {
+  font-family: var(--bs-body-font-family);
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6, .navbar-brand {
+  font-family: var(--bs-heading-font-family);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Glassmorphism Classes */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glass-panel-dark {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+/* Hero Section Specifics */
+.hero-image-bg {
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  min-height: 55vh;
+  display: flex;
+  align-items: center;
+  transition: background-image 2s ease-in-out;
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(58, 90, 64, 0.8) 0%, rgba(52, 58, 64, 0.6) 100%);
+  z-index: 1;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Modern Card Hover */
+.card-hover-elevate {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.card-hover-elevate:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+}
+
+/* Header & Footer Custom overrides */
+.navbar-custom {
+  background-color: var(--bs-primary) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.footer-custom {
+  background-color: var(--bs-dark);
+  color: #fff;
+}
+.footer-custom a:hover {
+  text-decoration: underline !important;
+  color: var(--bs-accent) !important;
+}
+
+/* Custom Buttons */
+.btn-primary {
+  background-color: var(--bs-primary);
+  border-color: var(--bs-primary);
+  border-radius: 8px;
+  padding: 0.6rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.btn-primary:hover {
+  background-color: var(--bs-secondary);
+  border-color: var(--bs-secondary);
+  transform: translateY(-2px);
+}
+.btn-accent {
+  background-color: var(--bs-accent);
+  color: #fff;
+  border: none;
+}
+.btn-accent:hover {
+  background-color: #c98e4d;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+/* Carousel Overrides */
+.carousel-item img {
+  object-fit: contain;
+  max-height: 600px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
