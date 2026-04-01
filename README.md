@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Neue Wohnformen Hamm
 
-## Getting Started
+Statische Next.js-Website für den Verein zur Förderung neuer Wohnformen in Hamm e.V.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 mit App Router
+- Statischer Export nach `out/`
+- Bootstrap 5 plus projektspezifisches CSS in `app/globals.css`
+- Markdown-Inhalte in `content/pages` und `content/news`
+- Decap CMS unter `public/admin`
+- Netlify für Deployment, Forms und GitHub-OAuth-Proxy
+
+## Lokale Entwicklung
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Entwicklungsserver: `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Qualitätssicherung
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint
+npm run build
+```
 
-## Learn More
+Für die Prüfung des statischen Exports:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`npm run start` liefert den Ordner `out/` lokal als statische Website aus.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Inhaltsverwaltung
 
-## Deploy on Vercel
+- Seiteninhalte: `content/pages`
+- Aktuelles: `content/news`
+- CMS-Konfiguration: `public/admin/config.yml`
+- Uploads: `public/images/uploads`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Netlify führt bei jedem Deployment `npm run build` aus und veröffentlicht den Inhalt von `out/`.
+
+- Primäre Domain: `https://neue-wohnformen-hamm.de`
+- Netlify-Subdomain: `https://neue-wohnformen-hamm.netlify.app`
+
+## Hinweise
+
+- Das Projekt ist strikt auf statischen Export ausgelegt. Kein eigener Node.js-Server in Produktion.
+- Kontaktanfragen laufen über Netlify Forms.
+- Der GitHub-Login für Decap CMS wird über `netlify/functions/auth.mjs` abgewickelt.

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CharacterSprite, SausageSprite, SteakSprite, RaccoonSprite, PlatformSprite } from './SVGSprites';
 import Joypad from './Joypad';
+import { releaseOrientationLock, requestLandscapeOrientation, useGameDeviceMode } from './useGameDeviceMode';
 
 // --- Level Data ---
 const LEVEL_END_X = 3500;
@@ -56,17 +57,72 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
   const [cameraX, setCameraX] = useState(0);
   const [score, setScore] = useState(0);
   const [gameState, setGameState] = useState<'playing'|'gameover'|'won'>('playing');
+   const { showMobileControls, isPortrait } = useGameDeviceMode();
+   const requiresLandscape = showMobileControls && isPortrait && gameState === 'playing';
 
   const keys = useRef<{ [key: string]: boolean }>({});
   const joyVector = useRef({ dx: 0 });
-  const timeRef = useRef(performance.now());
+   const timeRef = useRef(0);
   const reqRef = useRef<number>(0);
   const playerRef = useRef(player);
-  playerRef.current = player; // keep ref updated for loop access
+   const containerRef = useRef<HTMLDivElement>(null);
+   const [viewport, setViewport] = useState({ width: 0, height: 0 });
+
+   useEffect(() => {
+      playerRef.current = player;
+   }, [player]);
+
+   useEffect(() => {
+      const updateViewport = () => {
+         if (!containerRef.current) {
+            return;
+         }
+
+         setViewport({
+            width: containerRef.current.clientWidth,
+            height: containerRef.current.clientHeight,
+         });
+      };
+
+      updateViewport();
+
+      if (!containerRef.current) {
+         return;
+      }
+
+      const resizeObserver = new ResizeObserver(updateViewport);
+      resizeObserver.observe(containerRef.current);
+      window.addEventListener('resize', updateViewport);
+
+      return () => {
+         resizeObserver.disconnect();
+         window.removeEventListener('resize', updateViewport);
+      };
+   }, []);
 
   const getAABB = (x: number, y: number, w: number, h: number) => ({ l: x, r: x + w, t: y, b: y + h });
 
+   const worldScale = showMobileControls && !requiresLandscape && viewport.height > 0
+      ? Math.min(1, viewport.height / GAME_HEIGHT)
+      : 1;
+   const visibleWorldWidth = viewport.width > 0 ? viewport.width / worldScale : 900;
+   const maxCameraX = Math.max(0, LEVEL_END_X - visibleWorldWidth);
+
+   useEffect(() => {
+      if (!showMobileControls) {
+         return;
+      }
+
+      void requestLandscapeOrientation();
+
+      return () => {
+         releaseOrientationLock();
+      };
+   }, [showMobileControls]);
+
   useEffect(() => {
+      timeRef.current = performance.now();
+
     const handleKD = (e: KeyboardEvent) => { keys.current[e.code] = true; };
     const handleKU = (e: KeyboardEvent) => { keys.current[e.code] = false; };
     window.addEventListener('keydown', handleKD);
@@ -75,7 +131,6 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
     const checkCollisions = (px: number, py: number, vy: number) => {
       let grounded = false;
       let newY = py;
-      const pBox = getAABB(px, py, PLAYER_W, PLAYER_H);
 
       // Platform Collisions (only top down for simplicity)
       for (const plat of LEVEL.platforms) {
@@ -93,6 +148,12 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
 
     const loop = (time: number) => {
       if (gameState !== 'playing') {
+         reqRef.current = requestAnimationFrame(loop);
+         return;
+      }
+
+      if (requiresLandscape) {
+         timeRef.current = time;
          reqRef.current = requestAnimationFrame(loop);
          return;
       }
@@ -132,7 +193,8 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
 
       // Update Player State
       setPlayer({ x: nx, y: ny, vx, vy, grounded });
-      setCameraX(Math.max(0, nx - 300)); // smooth follow
+      const followOffset = showMobileControls ? visibleWorldWidth * 0.28 : 300;
+      setCameraX(Math.max(0, Math.min(nx - followOffset, maxCameraX)));
 
       // Enemy Movement & Collision
       setEnemies(prevEnemies => {
@@ -196,7 +258,7 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
       window.removeEventListener('keyup', handleKU);
       cancelAnimationFrame(reqRef.current);
     };
-  }, [gameState]);
+   }, [gameState, maxCameraX, requiresLandscape, showMobileControls, visibleWorldWidth]);
 
   const handleJoyMove = (dx: number) => { joyVector.current.dx = dx; };
   const handleJoyJump = () => {
@@ -216,8 +278,15 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
 
   return (
     <div 
+         ref={containerRef}
       className="position-relative overflow-hidden user-select-none shadow" 
-      style={{ height: '600px', backgroundColor: '#87CEEB', border: '5px solid #1976D2', borderRadius: '12px' }}
+         style={{
+            height: showMobileControls ? 'clamp(320px, 72vh, 420px)' : '600px',
+            minHeight: showMobileControls ? '320px' : '600px',
+            backgroundColor: '#87CEEB',
+            border: '5px solid #1976D2',
+            borderRadius: '12px',
+         }}
     >
       {/* Background Parallax Layer */}
       <div className="position-absolute" style={{ width: '200%', height: '100%', transform: `translateX(${-cameraX * 0.2}px)`, opacity: 0.6 }}>
@@ -229,38 +298,47 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
       </div>
 
       {/* World Layer */}
-      <div className="position-absolute" style={{ width: LEVEL_END_X, height: GAME_HEIGHT, transform: `translateX(${-cameraX}px)` }}>
-        
-        {/* Draw Platforms */}
-        {LEVEL.platforms.map(p => (
-           <div key={p.id} className="position-absolute shadow-sm" style={{ left: p.x, top: p.y }}>
-             <PlatformSprite width={p.w} height={p.h} />
-           </div>
-        ))}
+         <div
+            className="position-absolute top-0 start-0"
+            style={{
+               width: LEVEL_END_X,
+               height: GAME_HEIGHT,
+               transform: `scale(${worldScale})`,
+               transformOrigin: 'top left',
+            }}
+         >
+            <div className="position-absolute top-0 start-0" style={{ width: LEVEL_END_X, height: GAME_HEIGHT, transform: `translateX(${-cameraX}px)` }}>
+               {/* Draw Platforms */}
+               {LEVEL.platforms.map(p => (
+                   <div key={p.id} className="position-absolute shadow-sm" style={{ left: p.x, top: p.y }}>
+                      <PlatformSprite width={p.w} height={p.h} />
+                   </div>
+               ))}
 
-        {/* Draw Items */}
-        {items.filter(i => !i.collected).map(i => (
-           <div key={i.id} className="position-absolute" style={{ left: i.x, top: i.y }}>
-             {i.type === 'sausage' ? <SausageSprite /> : <SteakSprite />}
-           </div>
-        ))}
+               {/* Draw Items */}
+               {items.filter(i => !i.collected).map(i => (
+                   <div key={i.id} className="position-absolute" style={{ left: i.x, top: i.y }}>
+                      {i.type === 'sausage' ? <SausageSprite /> : <SteakSprite />}
+                   </div>
+               ))}
 
-        {/* Draw Waschbären */}
-        {enemies.filter(e => !e.dead).map(e => (
-           <div key={e.id} className="position-absolute" style={{ left: e.x, top: e.y }}>
-             <RaccoonSprite direction={e.dir} />
-           </div>
-        ))}
+               {/* Draw Waschbären */}
+               {enemies.filter(e => !e.dead).map(e => (
+                   <div key={e.id} className="position-absolute" style={{ left: e.x, top: e.y }}>
+                      <RaccoonSprite direction={e.dir} />
+                   </div>
+               ))}
 
-        {/* Draw Player */}
-        <div className="position-absolute" style={{ left: player.x, top: player.y, zIndex: 10 }}>
-           <CharacterSprite shirt="#ffd700" hair="#333" gender="M" isPlayer={true} />
-        </div>
+               {/* Draw Player */}
+               <div className="position-absolute" style={{ left: player.x, top: player.y, zIndex: 10 }}>
+                   <CharacterSprite shirt="#ffd700" hair="#333" gender="M" isPlayer={true} />
+               </div>
 
-        {/* Goal Area (Jörg waiting) */}
-        <div className="position-absolute d-flex flex-column align-items-center" style={{ left: 3350, top: GROUND_Y - 58 }}>
-           <div className="bg-white px-2 py-0 rounded text-dark fw-bold shadow-sm" style={{ fontSize: '0.8rem', opacity: 0.9 }}>Jörg</div>
-           <CharacterSprite shirt="#8B0000" hair="#8b4513" gender="M" />
+               {/* Goal Area (Jörg waiting) */}
+               <div className="position-absolute d-flex flex-column align-items-center" style={{ left: 3350, top: GROUND_Y - 58 }}>
+                   <div className="bg-white px-2 py-0 rounded text-dark fw-bold shadow-sm" style={{ fontSize: '0.8rem', opacity: 0.9 }}>Jörg</div>
+                   <CharacterSprite shirt="#8B0000" hair="#8b4513" gender="M" />
+               </div>
         </div>
       </div>
 
@@ -269,8 +347,24 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
          <div className="bg-dark bg-opacity-75 text-white px-3 py-2 rounded shadow">
            <h3 className="h6 fw-bold m-0 text-uppercase letter-spacing-1 text-warning">Die Wurst-Jagd</h3>
            <span className="fw-bold">Punkte: {score}</span>
+           {showMobileControls && gameState === 'playing' && !requiresLandscape && (
+                   <div className="small opacity-75 mt-1">Laufen links, Springen rechts.</div>
+           )}
          </div>
       </div>
+
+      {requiresLandscape && (
+         <div className="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-4" style={{ zIndex: 120, background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.88), rgba(13, 71, 161, 0.92))' }}>
+            <div className="glass-panel text-center text-dark p-4 p-md-5" style={{ maxWidth: '420px' }}>
+               <div className="display-4 mb-3">↻</div>
+               <h2 className="h3 fw-bold text-primary mb-3">Bitte ins Querformat drehen</h2>
+               <p className="mb-4 text-secondary">Die Wurst-Jagd wird auf dem Handy horizontal gespielt. Nach dem Drehen laeuft das Jump-and-Run automatisch weiter.</p>
+               <button className="btn btn-light btn-lg rounded-pill px-4 shadow-sm" onClick={() => { void requestLandscapeOrientation(); }}>
+                 Querformat anfordern
+               </button>
+            </div>
+         </div>
+      )}
 
       {/* Game Over Screen */}
       {gameState === 'gameover' && (
@@ -291,9 +385,11 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
       )}
 
       {/* Mobile Joypad */}
-      <div className="position-absolute bottom-0 w-100 d-md-none" style={{ zIndex: 50 }}>
-         <Joypad mode="platformer" onMove={handleJoyMove} onJump={handleJoyJump} />
-      </div>
+         {showMobileControls && !requiresLandscape && (
+            <div className="position-absolute bottom-0 w-100" style={{ zIndex: 50 }}>
+                <Joypad mode="platformer" onMove={handleJoyMove} onJump={handleJoyJump} />
+            </div>
+         )}
     </div>
   );
 }

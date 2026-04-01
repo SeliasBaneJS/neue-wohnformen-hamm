@@ -1,8 +1,15 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ImageCarousel from "@/components/ImageCarousel";
-import { getAllMarkdownFiles, getMarkdownData } from "@/lib/markdown";
+import { getAllMarkdownFiles, getMarkdownData, type MarkdownDocument } from "@/lib/markdown";
 import type { Metadata } from "next";
+
+type NewsItemData = {
+  title: string;
+  date: string;
+  image?: string;
+  gallery?: string[];
+};
 
 export const metadata: Metadata = {
   title: "Aktuelles & Neuigkeiten",
@@ -15,15 +22,13 @@ export const metadata: Metadata = {
 
 export default async function Aktuelles() {
   const files = getAllMarkdownFiles('news');
-  const newsItems = await Promise.all(
-    files.map(async (f) => await getMarkdownData('news', f.filename))
-  );
+  const newsItems = (await Promise.all(
+    files.map((file) => getMarkdownData<NewsItemData>('news', file.filename))
+  )).filter((news): news is MarkdownDocument<NewsItemData> => news !== null);
 
   // Sort by date descending
   newsItems.sort((a, b) => {
-    if ((a?.date || '') < (b?.date || '')) return 1;
-    if ((a?.date || '') > (b?.date || '')) return -1;
-    return 0;
+    return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 
   return (
@@ -33,8 +38,7 @@ export default async function Aktuelles() {
          <h1 className="mb-5 text-center fw-bold text-primary">Aktuelles & Neuigkeiten</h1>
          <div className="row g-5 justify-content-center">
            {newsItems.map((news, idx) => {
-             if (!news) return null;
-             const images = news.gallery ? news.gallery : (news.image ? [news.image] : []);
+             const images = news.gallery ?? (news.image ? [news.image] : []);
              
              return (
                <div className="col-lg-8" key={idx}>

@@ -20,6 +20,9 @@ export default function FunPage() {
           <p className="lead text-muted mx-auto" style={{ maxWidth: '600px' }}>
             Willkommen auf der Grillparty! Laufe durch den Garten von Vicanus I, triff deine Nachbarn und hol dir eine Wurst ab.
           </p>
+          <p className="small text-uppercase fw-semibold text-secondary mb-0">
+            Handy-Tipp: Grillparty im Hochformat, Wurst-Jagd im Querformat.
+          </p>
         </header>
 
         <section className="shadow-lg rounded-4 overflow-hidden bg-white">
@@ -27,7 +30,7 @@ export default function FunPage() {
         </section>
 
         <footer className="mt-4 text-center text-muted small">
-          <p>© {new Date().getFullYear()} Verein zur Förderung neuer Wohnformen in Hamm e. V.</p>
+          <p>© {new Date().getFullYear()} Verein zur Förderung neuer Wohnformen in Hamm e.V.</p>
         </footer>
       </div>
     </main>

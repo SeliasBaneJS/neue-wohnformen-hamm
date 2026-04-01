@@ -1,7 +1,7 @@
 const GITHUB_AUTH_URL = "https://github.com/login/oauth/authorize";
 const GITHUB_TOKEN_URL = "https://github.com/login/oauth/access_token";
 
-export default async (req) => {
+const handler = async (req) => {
   const url = new URL(req.url);
   const path = url.pathname.replace(/^\/\.netlify\/functions\/auth/, "");
 
@@ -78,6 +78,8 @@ export default async (req) => {
 
   return new Response("Not found", { status: 404 });
 };
+
+export default handler;
 
 export const config = {
   path: ["/.netlify/functions/auth", "/.netlify/functions/auth/*"],

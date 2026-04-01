@@ -6,36 +6,54 @@ type JoypadProps = {
   onMove?: (dx: number, dy: number) => void;
   onInteract?: () => void;
   onJump?: () => void;
+  actionLabel?: string;
 };
 
-export default function Joypad({ mode = 'topdown', onMove = () => {}, onInteract = () => {}, onJump = () => {} }: JoypadProps) {
-  const padStyle = "btn btn-dark opacity-75 rounded-pill fw-bold text-white fs-4 d-flex align-items-center justify-content-center";
+const buttonTouchStyle = { touchAction: 'none' as const };
+
+export default function Joypad({
+  mode = 'topdown',
+  onMove = () => {},
+  onInteract = () => {},
+  onJump = () => {},
+  actionLabel = 'Aktion',
+}: JoypadProps) {
+  const stopMoving = () => onMove(0, 0);
+  const createMoveHandlers = (dx: number, dy: number) => ({
+    onPointerDown: () => onMove(dx, dy),
+    onPointerUp: stopMoving,
+    onPointerLeave: stopMoving,
+    onPointerCancel: stopMoving,
+  });
+
+  const padStyle = 'btn btn-dark bg-opacity-75 rounded-circle shadow fw-bold text-white fs-4 d-flex align-items-center justify-content-center border-0';
 
   if (mode === 'platformer') {
     return (
-      <div className="d-flex w-100 justify-content-between p-3" style={{ pointerEvents: 'none' }}>
+      <div className="d-flex w-100 justify-content-between align-items-end px-3 pb-3 pt-2" style={{ pointerEvents: 'none' }}>
         {/* Left/Right controls */}
-        <div style={{ pointerEvents: 'auto', display: 'flex', gap: '15px', alignItems: 'flex-end', paddingBottom: '10px' }}>
+        <div className="glass-panel-dark px-3 py-2 d-flex gap-3 align-items-center" style={{ pointerEvents: 'auto' }}>
           <button 
-            className="btn btn-dark opacity-75 rounded-circle shadow fw-bold fs-3 text-white d-flex align-items-center justify-content-center" 
-            style={{ width: '60px', height: '60px' }}
-            onPointerDown={() => onMove(-1, 0)} onPointerUp={() => onMove(0, 0)} onPointerLeave={() => onMove(0, 0)}
+            className={padStyle}
+            style={{ width: '72px', height: '72px', ...buttonTouchStyle }}
+            {...createMoveHandlers(-1, 0)}
           >←</button>
           <button 
-            className="btn btn-dark opacity-75 rounded-circle shadow fw-bold fs-3 text-white d-flex align-items-center justify-content-center" 
-            style={{ width: '60px', height: '60px' }}
-            onPointerDown={() => onMove(1, 0)} onPointerUp={() => onMove(0, 0)} onPointerLeave={() => onMove(0, 0)}
-          >  →</button>
+            className={padStyle}
+            style={{ width: '72px', height: '72px', ...buttonTouchStyle }}
+            {...createMoveHandlers(1, 0)}
+          >→</button>
         </div>
 
         {/* Jump Button Right Side */}
-        <div style={{ pointerEvents: 'auto', alignSelf: 'flex-end', paddingBottom: '10px' }}>
+        <div className="glass-panel-dark px-3 py-2" style={{ pointerEvents: 'auto' }}>
           <button 
             className="btn btn-danger rounded-circle shadow fw-bold fs-5 text-uppercase" 
-            style={{ width: '80px', height: '80px', border: '3px solid #fff' }}
+            style={{ width: '92px', height: '92px', border: '3px solid #fff', touchAction: 'none' }}
             onPointerDown={onJump}
+            onPointerCancel={() => undefined}
           >
-            Jump
+            Springen
           </button>
         </div>
       </div>
@@ -43,28 +61,30 @@ export default function Joypad({ mode = 'topdown', onMove = () => {}, onInteract
   }
 
   return (
-    <div className="d-flex w-100 justify-content-between p-3" style={{ pointerEvents: 'none' }}>
+    <div className="d-flex w-100 justify-content-between align-items-end px-3 pb-3 pt-2" style={{ pointerEvents: 'none' }}>
       {/* D-Pad Left Side */}
-      <div style={{ pointerEvents: 'auto', display: 'grid', gridTemplateColumns: 'repeat(3, 50px)', gridTemplateRows: 'repeat(3, 50px)', gap: '5px' }}>
-        <div />
-        <button className={padStyle} onPointerDown={() => onMove(0, -1)} onPointerUp={() => onMove(0, 0)} onPointerLeave={() => onMove(0, 0)}>↑</button>
-        <div />
-        <button className={padStyle} onPointerDown={() => onMove(-1, 0)} onPointerUp={() => onMove(0, 0)} onPointerLeave={() => onMove(0, 0)}>←</button>
-        {/* Center dot */}
-        <div className="bg-dark opacity-25 rounded-circle" />
-        <button className={padStyle} onPointerDown={() => onMove(1, 0)} onPointerUp={() => onMove(0, 0)} onPointerLeave={() => onMove(0, 0)}>→</button>
-        <div />
-        <button className={padStyle} onPointerDown={() => onMove(0, 1)} onPointerUp={() => onMove(0, 0)} onPointerLeave={() => onMove(0, 0)}>↓</button>
+      <div className="glass-panel-dark p-2" style={{ pointerEvents: 'auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 60px)', gridTemplateRows: 'repeat(3, 60px)', gap: '8px' }}>
+          <div />
+          <button className={padStyle} style={buttonTouchStyle} {...createMoveHandlers(0, -1)}>↑</button>
+          <div />
+          <button className={padStyle} style={buttonTouchStyle} {...createMoveHandlers(-1, 0)}>←</button>
+          <div className="rounded-circle bg-white bg-opacity-25" />
+          <button className={padStyle} style={buttonTouchStyle} {...createMoveHandlers(1, 0)}>→</button>
+          <div />
+          <button className={padStyle} style={buttonTouchStyle} {...createMoveHandlers(0, 1)}>↓</button>
+        </div>
       </div>
 
       {/* Action Button Right Side */}
-      <div style={{ pointerEvents: 'auto', alignSelf: 'flex-end', paddingBottom: '20px' }}>
+      <div className="glass-panel-dark px-3 py-2 d-flex flex-column align-items-center gap-2" style={{ pointerEvents: 'auto' }}>
+        <span className="small text-uppercase text-white opacity-75">Aktion</span>
         <button 
           className="btn btn-primary rounded-circle shadow fw-bold fs-5 text-uppercase" 
-          style={{ width: '80px', height: '80px' }}
-          onClick={onInteract}
+          style={{ width: '92px', height: '92px', touchAction: 'manipulation' }}
+          onPointerDown={onInteract}
         >
-          Sprechen
+          {actionLabel}
         </button>
       </div>
     </div>

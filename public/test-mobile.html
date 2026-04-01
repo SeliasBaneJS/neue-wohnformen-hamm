@@ -1,41 +1,318 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 
 <head>
-    <meta charset="UTF-mfrac">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Preview</title>
+    <title>Mobile Test Preview</title>
     <style>
+        :root {
+            color-scheme: dark;
+            --bg: #09111f;
+            --panel: rgba(11, 19, 34, 0.82);
+            --panel-border: rgba(255, 255, 255, 0.12);
+            --text: #f5f7fa;
+            --muted: #a9b6c9;
+            --accent: #dda15e;
+            --accent-2: #4f8f76;
+            --device-shell: #131c2d;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at top left, rgba(221, 161, 94, 0.18), transparent 28%),
+                radial-gradient(circle at top right, rgba(79, 143, 118, 0.2), transparent 24%),
+                linear-gradient(180deg, #0d1525 0%, var(--bg) 100%);
+        }
+
+        .shell {
+            width: min(1400px, 100%);
+            margin: 0 auto;
+            padding: 32px 24px 48px;
+        }
+
+        .toolbar {
+            display: grid;
+            gap: 18px;
             padding: 20px;
-            background: #333;
+            border: 1px solid var(--panel-border);
+            border-radius: 24px;
+            background: var(--panel);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        .toolbar h1 {
+            margin: 0;
+            font-size: clamp(1.6rem, 2vw, 2.25rem);
+            line-height: 1.1;
+        }
+
+        .toolbar p {
+            margin: 8px 0 0;
+            color: var(--muted);
+            max-width: 64ch;
+        }
+
+        .toolbar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            align-items: end;
+        }
+
+        label {
+            display: grid;
+            gap: 8px;
+            font-size: 0.92rem;
+            color: var(--muted);
+        }
+
+        input,
+        button {
+            font: inherit;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text);
+        }
+
+        .checkbox {
             display: flex;
-            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text);
+        }
+
+        .checkbox input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--accent);
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        button {
+            padding: 12px 18px;
+            border: 0;
+            border-radius: 999px;
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent) 0%, #c98341 100%);
+            cursor: pointer;
+            box-shadow: 0 14px 28px rgba(0, 0, 0, 0.22);
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, var(--accent-2) 0%, #335f50 100%);
+        }
+
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 22px;
+            margin-top: 24px;
+        }
+
+        .preview-card {
+            padding: 18px;
+            border-radius: 24px;
+            border: 1px solid var(--panel-border);
+            background: var(--panel);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+        }
+
+        .preview-card h2 {
+            margin: 0 0 6px;
+            font-size: 1.15rem;
+        }
+
+        .preview-card p {
+            margin: 0 0 16px;
+            color: var(--muted);
         }
 
         .device {
-            width: 375px;
-            height: 812px;
-            border: 12px solid #111;
-            border-radius: 40px;
             overflow: hidden;
-            background: white;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            border: 12px solid var(--device-shell);
+            border-radius: 34px;
+            background: #fff;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+        }
+
+        .device.portrait {
+            width: min(390px, 100%);
+            height: 844px;
+            margin: 0 auto;
+        }
+
+        .device.landscape {
+            width: 844px;
+            max-width: 100%;
+            height: 390px;
+            margin: 0 auto;
         }
 
         iframe {
             width: 100%;
             height: 100%;
-            border: none;
+            border: 0;
+            background: #fff;
+        }
+
+        .status {
+            margin-top: 16px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 900px) {
+            .shell {
+                padding: 20px 16px 32px;
+            }
+
+            .device.portrait {
+                height: 720px;
+            }
+
+            .device.landscape {
+                height: 320px;
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="device">
-        <iframe src="http://localhost:3000/" title="Mobile View"></iframe>
+    <div class="shell">
+        <section class="toolbar">
+            <div>
+                <h1>Mobile Test Preview</h1>
+                <p>Vergleich von Hochformat und Querformat fuer lokale Mobile-Checks. Praktisch fuer Layout, Touch-Steuerung und den Landscape-Zwang im Jump-and-Run.</p>
+            </div>
+
+            <div class="toolbar-grid">
+                <label>
+                    Basis-URL
+                    <input id="base-url" type="text" value="http://localhost:3000">
+                </label>
+
+                <label>
+                    Pfad
+                    <input id="route-path" type="text" value="/fun">
+                </label>
+
+                <label>
+                    Optionen
+                    <span class="checkbox">
+                        <input id="mobile-preview" type="checkbox" checked>
+                        <span>`mobilePreview=1` anhaengen</span>
+                    </span>
+                </label>
+            </div>
+
+            <div class="button-row">
+                <button id="reload-button">Previews neu laden</button>
+                <button class="secondary" data-path="/">Startseite</button>
+                <button class="secondary" data-path="/fun">Spielseite</button>
+            </div>
+
+            <div id="status" class="status">Aktueller Pfad: /fun</div>
+        </section>
+
+        <section class="preview-grid">
+            <article class="preview-card">
+                <h2>Hochformat</h2>
+                <p>390 x 844. Ideal fuer Portrait-Pruefung und die normale Grillparty-Ansicht.</p>
+                <div class="device portrait">
+                    <iframe id="portrait-frame" title="Mobile Preview Hochformat"></iframe>
+                </div>
+            </article>
+
+            <article class="preview-card">
+                <h2>Querformat</h2>
+                <p>844 x 390. Wichtig fuer die mobile Jump-and-Run-Pruefung im Landscape-Modus.</p>
+                <div class="device landscape">
+                    <iframe id="landscape-frame" title="Mobile Preview Querformat"></iframe>
+                </div>
+            </article>
+        </section>
     </div>
+
+    <script>
+        const baseUrlInput = document.getElementById('base-url');
+        const routePathInput = document.getElementById('route-path');
+        const mobilePreviewInput = document.getElementById('mobile-preview');
+        const portraitFrame = document.getElementById('portrait-frame');
+        const landscapeFrame = document.getElementById('landscape-frame');
+        const status = document.getElementById('status');
+        const reloadButton = document.getElementById('reload-button');
+        const quickButtons = document.querySelectorAll('[data-path]');
+
+        const normalizePath = (value) => {
+            if (!value) return '/';
+            return value.startsWith('/') ? value : `/${value}`;
+        };
+
+        const buildPreviewUrl = () => {
+            const baseUrl = baseUrlInput.value.trim().replace(/\/$/, '');
+            const path = normalizePath(routePathInput.value.trim());
+            const previewUrl = new URL(`${baseUrl}${path}`);
+
+            if (mobilePreviewInput.checked) {
+                previewUrl.searchParams.set('mobilePreview', '1');
+            } else {
+                previewUrl.searchParams.delete('mobilePreview');
+            }
+
+            return previewUrl.toString();
+        };
+
+        const refreshFrames = () => {
+            const previewUrl = buildPreviewUrl();
+            portraitFrame.src = previewUrl;
+            landscapeFrame.src = previewUrl;
+            status.textContent = `Aktueller Preview-Link: ${previewUrl}`;
+        };
+
+        reloadButton.addEventListener('click', refreshFrames);
+        baseUrlInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') refreshFrames();
+        });
+        routePathInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') refreshFrames();
+        });
+        mobilePreviewInput.addEventListener('change', refreshFrames);
+
+        quickButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                routePathInput.value = button.dataset.path;
+                refreshFrames();
+            });
+        });
+
+        refreshFrames();
+    </script>
 </body>
 
 </html>

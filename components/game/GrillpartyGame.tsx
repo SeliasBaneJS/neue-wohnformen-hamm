@@ -1,22 +1,23 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { CHARACTERS, OBSTACLES, GAME_BOUNDS, ITEMS, ItemData } from './gameData';
+import { CHARACTERS, OBSTACLES, GAME_BOUNDS, ITEMS, ItemData, CharacterData } from './gameData';
 import { CharacterSprite, GrillSprite, TreeSprite, PropSprite } from './SVGSprites';
 import Joypad from './Joypad';
 import GrillpartyPlatformer from './GrillpartyPlatformer';
+import { requestLandscapeOrientation, useGameDeviceMode } from './useGameDeviceMode';
 
 const PLAYER_SPEED = 300; // px per second
-const PLAYER_RADIUS = 20;
 
 export default function GrillpartyGame() {
   const [player, setPlayer] = useState({ x: 600, y: 800 }); // Start in the garden
   const [dialogue, setDialogue] = useState<{name: string, text: string} | null>(null);
   const [viewport, setViewport] = useState({ w: 800, h: 600 });
   const [isPlatforming, setIsPlatforming] = useState(false);
+  const { showMobileControls } = useGameDeviceMode();
 
   // Game/Quest State
-  const [inventory, setInventory] = useState<string[]>([]);
+  const [inventory, setInventory] = useState<ItemData['type'][]>([]);
   const [mapItems, setMapItems] = useState<ItemData[]>(ITEMS);
   const [questState, setQuestState] = useState({
     dianaSpoken: false,
@@ -29,7 +30,10 @@ export default function GrillpartyGame() {
   const joyVector = useRef({ dx: 0, dy: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef(player);
-  playerRef.current = player; // always keep ref in sync
+
+  useEffect(() => {
+    playerRef.current = player;
+  }, [player]);
 
   // Resize listener for camera
   useEffect(() => {
@@ -131,23 +135,56 @@ export default function GrillpartyGame() {
   }, [dialogue]);
 
   // Item pickup only (triggered by spacebar)
+  const getNearestItem = (x: number, y: number): { item: ItemData; distance: number } | null => {
+    let nearestItem: ItemData | null = null;
+    let nearestDistance = 80;
+
+    for (const item of mapItems) {
+      const distance = Math.hypot(item.x - x, item.y - y);
+      if (distance <= nearestDistance) {
+        nearestItem = item;
+        nearestDistance = distance;
+      }
+    }
+
+    return nearestItem ? { item: nearestItem, distance: nearestDistance } : null;
+  };
+
+  const getNearestNpc = (x: number, y: number): { npc: CharacterData; distance: number } | null => {
+    let nearestNpc: CharacterData | null = null;
+    let nearestDistance = 120;
+
+    for (const npc of CHARACTERS) {
+      const distance = Math.hypot(npc.x - x, npc.y - y);
+      if (distance <= nearestDistance) {
+        nearestNpc = npc;
+        nearestDistance = distance;
+      }
+    }
+
+    return nearestNpc ? { npc: nearestNpc, distance: nearestDistance } : null;
+  };
+
   const handleItemPickup = () => {
     if (dialogue) { setDialogue(null); return; }
     const px = playerRef.current.x;
     const py = playerRef.current.y;
 
-    let itemToPickup = null;
-    for (const item of mapItems) {
-      const dist = Math.hypot(item.x - px, item.y - py);
-      if (dist < 80) itemToPickup = item;
+    const nearestItem = getNearestItem(px, py);
+    if (!nearestItem) {
+      return;
     }
 
-    if (itemToPickup) {
-      setInventory(prev => [...prev, itemToPickup.type]);
-      setMapItems(prev => prev.filter(i => i.id !== itemToPickup.id));
-      const names = { beer: 'Bier (Alkoholfrei)', salad: 'Edeltrauds legendärer Nudelsalat', coal: 'Grillkohle' };
-      setDialogue({ name: 'System', text: `Du hast [${names[itemToPickup.type as keyof typeof names]}] aufgesammelt!` });
-    }
+    const itemToPickup = nearestItem.item;
+
+    setInventory(prev => [...prev, itemToPickup.type]);
+    setMapItems(prev => prev.filter(i => i.id !== itemToPickup.id));
+    const names: Record<ItemData['type'], string> = {
+      beer: 'Bier (Alkoholfrei)',
+      salad: 'Edeltrauds legendärer Nudelsalat',
+      coal: 'Grillkohle',
+    };
+    setDialogue({ name: 'System', text: `Du hast [${names[itemToPickup.type]}] aufgesammelt!` });
   };
 
   // NPC dialogue (triggered by clicking on a specific NPC)
@@ -175,10 +212,10 @@ export default function GrillpartyGame() {
           setQuestState(s => ({ ...s, dianaSpoken: true }));
           break;
         case 'jakob':
-          text = "Hey! Ich hoffe dir gefällt die Website und das kleine Spiel hier. Hat Spaß gemacht, das zu bauen!";
+          text = "Hey! Ich hoffe dir gefällt die Website und das kleine Spiel hier.";
           break;
         case 'edeltraud':
-          if (questState.edeltraudSalad) text = "Danke dir! Mein Nudelsalat ist gerettet. Den kann ich ja schlecht ohne Salat machen!";
+          if (questState.edeltraudSalad) text = "Danke dir! Mein Nudelsalat ist gerettet. Jetzt kann ich ihn endlich auf den Tisch stellen!";
           else if (inventory.includes('salad')) {
              text = "Oh, du hast meinen Salat gefunden! Wunderbar, den hatte ich doch glatt verlegt. Vielen Dank!";
              setInventory(inv => inv.filter(i => i !== 'salad'));
@@ -242,6 +279,38 @@ export default function GrillpartyGame() {
     joyVector.current = { dx, dy };
   };
 
+  const mobileNpcAction = getNearestNpc(player.x, player.y);
+  const mobileItemAction = getNearestItem(player.x, player.y);
+  const mobileAction = !mobileNpcAction && !mobileItemAction
+    ? null
+    : !mobileNpcAction
+      ? { type: 'item' as const, label: 'Nehmen' }
+      : !mobileItemAction
+        ? { type: 'npc' as const, label: 'Reden', npcId: mobileNpcAction.npc.id }
+        : mobileItemAction.distance <= mobileNpcAction.distance
+          ? { type: 'item' as const, label: 'Nehmen' }
+          : { type: 'npc' as const, label: 'Reden', npcId: mobileNpcAction.npc.id };
+
+  const handleMobileAction = () => {
+    if (dialogue) {
+      setDialogue(null);
+      return;
+    }
+
+    if (mobileAction?.type === 'npc') {
+      handleNpcClick(mobileAction.npcId);
+      return;
+    }
+
+    handleItemPickup();
+  };
+
+  const startPlatformer = () => {
+    void requestLandscapeOrientation();
+    setDialogue(null);
+    setIsPlatforming(true);
+  };
+
   // Camera Transformation
   const camX = Math.max(0, Math.min(GAME_BOUNDS.width - viewport.w, player.x - viewport.w / 2));
   const camY = Math.max(0, Math.min(GAME_BOUNDS.height - viewport.h, player.y - viewport.h / 2));
@@ -262,7 +331,13 @@ export default function GrillpartyGame() {
   return (
     <div 
       className="position-relative overflow-hidden user-select-none shadow" 
-      style={{ height: '75vh', minHeight: '500px', borderRadius: '12px', border: '5px solid #2e7d32', backgroundColor: '#7cb342' }}
+      style={{
+        height: showMobileControls ? 'min(70vh, 560px)' : '75vh',
+        minHeight: showMobileControls ? '360px' : '500px',
+        borderRadius: '12px',
+        border: '5px solid #2e7d32',
+        backgroundColor: '#7cb342',
+      }}
       ref={containerRef}
     >
       <div 
@@ -378,6 +453,9 @@ export default function GrillpartyGame() {
       <div className="bg-dark bg-opacity-75 text-white p-3 rounded-4 shadow">
           <h3 className="h6 fw-bold m-0 text-uppercase letter-spacing-1 text-accent">Grillparty</h3>
           <p className="small mb-1 opacity-75 d-none d-md-block">Rette das Grillfest!</p>
+          {showMobileControls && (
+            <p className="small mb-1 opacity-75 d-md-none">D-Pad links, Kontext-Aktion rechts.</p>
+          )}
           <div className="small opacity-50 d-none d-md-block" style={{ fontSize: '0.7rem' }}>
             <span>WASD / Pfeiltasten = Bewegen</span><br/>
             <span>Leertaste = Items aufsammeln</span><br/>
@@ -390,7 +468,7 @@ export default function GrillpartyGame() {
           <div className="bg-white text-dark p-2 rounded-4 shadow-sm border border-2 border-primary d-flex align-items-center gap-2">
             <span className="fw-bold small ms-2">Inventar:</span>
             {inventory.map((item, i) => (
-               <div key={i}><PropSprite type={item as any} /></div>
+               <div key={i}><PropSprite type={item} /></div>
             ))}
           </div>
         )}
@@ -404,14 +482,13 @@ export default function GrillpartyGame() {
               <h4 className="fw-bold text-primary m-0 fs-3">{dialogue.name}</h4>
               <button className="btn-close" aria-label="Close" onClick={() => setDialogue(null)}></button>
             </div>
-            <p className="fs-4 text-dark m-0 lh-base fw-medium">"{dialogue.text}"</p>
+            <p className="fs-4 text-dark m-0 lh-base fw-medium">&bdquo;{dialogue.text}&ldquo;</p>
             
             {dialogue.name === 'Jörg' && inventory.includes('coal') && !questState.grillLit ? (
                <div className="mt-4 text-center">
                  <button className="btn btn-warning btn-lg fw-bold px-5 py-3 rounded-pill shadow w-100 fs-4 text-dark" onClick={() => {
-                   setDialogue(null);
-                   setIsPlatforming(true);
-                 }}>⭐ Wurst-Jagd Starten (Jump'n'Run) ⭐</button>
+                   startPlatformer();
+                 }}>⭐ Wurst-Jagd starten (Jump-and-Run) ⭐</button>
                </div>
             ) : (
                <div className="text-muted fw-bold small text-end mt-3 opacity-50 text-uppercase letter-spacing-1 cursor-pointer" onClick={() => setDialogue(null)}>
@@ -423,9 +500,15 @@ export default function GrillpartyGame() {
       )}
 
       {/* Joypad for Mobile */}
-      <div className="position-absolute bottom-0 start-0 w-100 d-md-none" style={{ zIndex: 60 }}>
-        <Joypad onMove={handleJoyMove} onInteract={() => handleItemPickup()} />
-      </div>
+      {showMobileControls && (
+        <div className="position-absolute bottom-0 start-0 w-100" style={{ zIndex: 60 }}>
+          <Joypad
+            onMove={handleJoyMove}
+            onInteract={handleMobileAction}
+            actionLabel={mobileAction?.label ?? 'Aktion'}
+          />
+        </div>
+      )}
 
       {/* Victory Overlay - all quests done */}
       {questState.grillLit && questState.hansToasted && questState.edeltraudSalad && !dialogue && (

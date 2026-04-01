@@ -2,6 +2,13 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { getMarkdownData } from "@/lib/markdown";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+type AboutPageData = {
+  title: string;
+  vorsitzende?: string;
+  image?: string;
+};
 
 export const metadata: Metadata = {
   title: "Über uns",
@@ -13,7 +20,11 @@ export const metadata: Metadata = {
 };
 
 export default async function About() {
-  const pageData = await getMarkdownData('pages', 'about');
+  const pageData = await getMarkdownData<AboutPageData>('pages', 'about');
+
+  if (!pageData) {
+    notFound();
+  }
 
   return (
     <div className="d-flex flex-column min-vh-100">
@@ -22,9 +33,9 @@ export default async function About() {
          <div className="row justify-content-center">
            <div className="col-lg-8">
              <div className="card border-0 shadow-sm bg-white p-4 p-md-5">
-                <h1 className="mb-4 fw-bold text-primary text-center">{pageData?.title || 'Über uns'}</h1>
+                <h1 className="mb-4 fw-bold text-primary text-center">{pageData.title}</h1>
                 
-                {pageData?.image && (
+                {pageData.image && (
                   <div className="text-center mb-5 mt-4">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={pageData.image} alt={pageData.vorsitzende || "Portrait"} className="img-fluid rounded-circle shadow" style={{width: '200px', height: '200px', objectFit: 'cover'}} />
@@ -32,7 +43,7 @@ export default async function About() {
                   </div>
                 )}
 
-                {pageData && <div className="mt-4 fs-5 lh-lg text-secondary" dangerouslySetInnerHTML={{ __html: pageData.contentHtml }} />}
+                <div className="mt-4 fs-5 lh-lg text-secondary" dangerouslySetInnerHTML={{ __html: pageData.contentHtml }} />
              </div>
            </div>
          </div>

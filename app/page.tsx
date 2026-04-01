@@ -4,11 +4,28 @@ import InfoBlock from "@/components/InfoBlock";
 import HousesCarousel from "@/components/HousesCarousel";
 import Footer from "@/components/Footer";
 import { getMarkdownData } from "@/lib/markdown";
+import { notFound } from "next/navigation";
+
+type HomePageData = {
+  hero_images?: string[];
+  image?: string;
+  hero_title: string;
+  hero_subtitle: string;
+  feature1_title: string;
+  feature1_text: string;
+  feature2_title: string;
+  feature2_text: string;
+  feature3_title: string;
+  feature3_text: string;
+  houses?: Array<{ image: string; title: string; text: string }>;
+};
 
 export default async function Home() {
-  const pageData = await getMarkdownData('pages', 'home');
+  const pageData = await getMarkdownData<HomePageData>('pages', 'home');
 
-  if (!pageData) return <div>Loading...</div>;
+  if (!pageData) {
+    notFound();
+  }
 
   const features = [
     { title: pageData.feature1_title, text: pageData.feature1_text },
@@ -23,7 +40,7 @@ export default async function Home() {
         <HeroSection 
           title={pageData.hero_title} 
           subtitle={pageData.hero_subtitle} 
-          images={pageData.hero_images || [pageData.image]} 
+          images={pageData.hero_images?.length ? pageData.hero_images : pageData.image ? [pageData.image] : undefined}
         />
         <InfoBlock features={features} />
         
