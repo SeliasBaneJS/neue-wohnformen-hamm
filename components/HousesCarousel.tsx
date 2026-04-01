@@ -75,31 +75,34 @@ export default function HousesCarousel({ houses }: { houses: House[] }) {
           </div>
 
           {/* Texts Side */}
-          <div className="col-md-6 p-4 p-md-5 position-relative d-flex align-items-center" style={{ minHeight: '350px' }}>
-             {houses.map((house, idx) => (
-                <div 
-                  key={"txt-"+idx}
-                  className="position-absolute w-100 px-4 px-md-5 start-0"
-                  style={{
-                    opacity: idx === activeIndex ? 1 : 0,
-                    visibility: idx === activeIndex ? 'visible' : 'hidden',
-                    transition: 'all 0.8s ease-in-out',
-                    transform: idx === activeIndex ? 'translateY(0)' : 'translateY(20px)'
-                  }}
-                >
-                  <h3 className="h2 fw-bold text-primary mb-3">{house.title}</h3>
-                  <p className="fs-5 text-secondary lh-lg mb-4">{house.text}</p>
-                </div>
-             ))}
+          <div className="col-md-6 p-4 p-md-5 d-flex flex-column justify-content-center">
+             <div style={{ display: 'grid' }}>
+                {houses.map((house, idx) => (
+                  <div 
+                    key={"txt-"+idx}
+                    style={{
+                      gridArea: '1 / 1',
+                      opacity: idx === activeIndex ? 1 : 0,
+                      visibility: idx === activeIndex ? 'visible' : 'hidden',
+                      transition: 'all 0.8s ease-in-out',
+                      transform: idx === activeIndex ? 'translateY(0)' : 'translateY(20px)',
+                      pointerEvents: idx === activeIndex ? 'auto' : 'none',
+                    }}
+                  >
+                    <h3 className="h2 fw-bold text-primary mb-3">{house.title}</h3>
+                    <p className="fs-5 text-secondary lh-lg mb-0">{house.text}</p>
+                  </div>
+                ))}
+             </div>
              
              {/* Indicators */}
-             <div className="position-absolute bottom-0 start-50 translate-middle-x pb-4 d-flex gap-2">
+             <div className="mt-4 pt-3 d-flex justify-content-center gap-2">
                 {houses.map((_, idx) => (
                   <button
                     key={"btn-"+idx}
                     onClick={() => setActiveIndex(idx)}
                     className={`btn rounded-circle p-0 ${idx === activeIndex ? 'bg-primary' : 'bg-secondary bg-opacity-25'}`}
-                    style={{ width: '12px', height: '12px', transition: 'background-color 0.3s' }}
+                    style={{ width: '14px', height: '14px', transition: 'background-color 0.3s' }}
                     aria-label={`Slide ${idx + 1}`}
                   />
                 ))}
