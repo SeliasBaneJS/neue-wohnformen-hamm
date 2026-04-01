@@ -123,30 +123,32 @@ export default function Joypad({
 
   if (mode === 'platformer') {
     return (
-      <div className="d-flex w-100 justify-content-between align-items-end px-3 pb-3 pt-2" style={{ pointerEvents: 'none' }}>
+      <div className="d-flex w-100 justify-content-between align-items-end px-2 pb-2 pt-1" style={{ pointerEvents: 'none' }}>
         {/* Left/Right controls */}
-        <div className="glass-panel-dark px-3 py-2 d-flex gap-3 align-items-center" style={{ pointerEvents: 'auto' }}>
+        <div className="glass-panel-dark px-2 py-2 d-flex gap-2 align-items-center" style={{ pointerEvents: 'auto', background: 'rgba(11, 19, 34, 0.42)', backdropFilter: 'blur(12px)' }}>
           <button 
             className={padStyle}
-            style={{ width: '72px', height: '72px', ...buttonTouchStyle }}
+            style={{ width: '64px', height: '64px', fontSize: '1.75rem', backgroundColor: 'rgba(33, 37, 41, 0.78)', ...buttonTouchStyle }}
             {...createMoveHandlers(-1, 0)}
           >←</button>
           <button 
             className={padStyle}
-            style={{ width: '72px', height: '72px', ...buttonTouchStyle }}
+            style={{ width: '64px', height: '64px', fontSize: '1.75rem', backgroundColor: 'rgba(33, 37, 41, 0.78)', ...buttonTouchStyle }}
             {...createMoveHandlers(1, 0)}
           >→</button>
         </div>
 
         {/* Jump Button Right Side */}
-        <div className="glass-panel-dark px-3 py-2" style={{ pointerEvents: 'auto' }}>
+        <div className="glass-panel-dark px-2 py-2 d-flex flex-column align-items-center gap-2" style={{ pointerEvents: 'auto', background: 'rgba(11, 19, 34, 0.42)', backdropFilter: 'blur(12px)' }}>
+          <span className="small text-uppercase text-white opacity-75">Springen</span>
           <button 
-            className="btn btn-danger rounded-circle shadow fw-bold fs-5 text-uppercase" 
-            style={{ width: '92px', height: '92px', border: '3px solid #fff', touchAction: 'none' }}
+            className="btn rounded-circle shadow fw-bold text-white border-0" 
+            style={{ width: '84px', height: '84px', border: '3px solid rgba(255,255,255,0.92)', touchAction: 'none', backgroundColor: 'rgba(220, 53, 69, 0.86)', fontSize: '2rem', lineHeight: 1, padding: 0 }}
             onPointerDown={onJump}
             onPointerCancel={() => undefined}
+            aria-label="Springen"
           >
-            Springen
+            ↑
           </button>
         </div>
       </div>

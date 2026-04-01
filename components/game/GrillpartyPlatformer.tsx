@@ -45,6 +45,7 @@ const MOVE_SPEED = 300;
 const ENEMY_SPEED = 100;
 const PLAYER_W = 40;
 const PLAYER_H = 48;
+const MOBILE_CONTROL_ZONE_HEIGHT = 112;
 
 type PlatformerProps = {
   onWin: (score: number) => void;
@@ -110,9 +111,17 @@ export default function GrillpartyPlatformer({
 
   const getAABB = (x: number, y: number, w: number, h: number) => ({ l: x, r: x + w, t: y, b: y + h });
 
+   const mobileControlZoneHeight = showMobileControls && !requiresLandscape ? MOBILE_CONTROL_ZONE_HEIGHT : 0;
+   const playAreaHeight = viewport.height > 0
+      ? Math.max(viewport.height - mobileControlZoneHeight, 0)
+      : 0;
    const worldScale = showMobileControls && !requiresLandscape && viewport.height > 0
       ? Math.min(1, viewport.height / GAME_HEIGHT)
       : 1;
+   const scaledWorldHeight = GAME_HEIGHT * worldScale;
+   const worldOffsetY = showMobileControls && !requiresLandscape
+      ? Math.min(0, playAreaHeight - scaledWorldHeight)
+      : 0;
    const visibleWorldWidth = viewport.width > 0 ? viewport.width / worldScale : 900;
    const maxCameraX = Math.max(0, LEVEL_END_X - visibleWorldWidth);
 
@@ -296,57 +305,64 @@ export default function GrillpartyPlatformer({
             borderRadius: isFullscreenActive ? '0' : '12px',
          }}
     >
-      {/* Background Parallax Layer */}
-      <div className="position-absolute" style={{ width: '200%', height: '100%', transform: `translateX(${-cameraX * 0.2}px)`, opacity: 0.6 }}>
-         {/* Simple Clouds */}
-         <div style={{ position:'absolute', top: 50, left: 200, fontSize: '64px' }}>☁️</div>
-         <div style={{ position:'absolute', top: 100, left: 800, fontSize: '64px' }}>☁️</div>
-         <div style={{ position:'absolute', top: 30, left: 1500, fontSize: '64px' }}>☁️</div>
-         <div style={{ position:'absolute', top: 80, left: 2200, fontSize: '64px' }}>☁️</div>
-      </div>
+      <div
+         className="position-absolute top-0 start-0 w-100 overflow-hidden"
+         style={{ height: playAreaHeight > 0 ? `${playAreaHeight}px` : '100%' }}
+      >
+         {/* Background Parallax Layer */}
+         <div className="position-absolute" style={{ width: '200%', height: '100%', transform: `translateX(${-cameraX * 0.2}px)`, opacity: 0.6 }}>
+            {/* Simple Clouds */}
+            <div style={{ position:'absolute', top: 50, left: 200, fontSize: '64px' }}>☁️</div>
+            <div style={{ position:'absolute', top: 100, left: 800, fontSize: '64px' }}>☁️</div>
+            <div style={{ position:'absolute', top: 30, left: 1500, fontSize: '64px' }}>☁️</div>
+            <div style={{ position:'absolute', top: 80, left: 2200, fontSize: '64px' }}>☁️</div>
+         </div>
 
-      {/* World Layer */}
-         <div
-            className="position-absolute top-0 start-0"
-            style={{
-               width: LEVEL_END_X,
-               height: GAME_HEIGHT,
-               transform: `scale(${worldScale})`,
-               transformOrigin: 'top left',
-            }}
-         >
-            <div className="position-absolute top-0 start-0" style={{ width: LEVEL_END_X, height: GAME_HEIGHT, transform: `translateX(${-cameraX}px)` }}>
-               {/* Draw Platforms */}
-               {LEVEL.platforms.map(p => (
-                   <div key={p.id} className="position-absolute shadow-sm" style={{ left: p.x, top: p.y }}>
-                      <PlatformSprite width={p.w} height={p.h} />
-                   </div>
-               ))}
+         {/* World Layer */}
+         <div className="position-absolute top-0 start-0" style={{ transform: `translateY(${worldOffsetY}px)` }}>
+            <div
+               className="position-absolute top-0 start-0"
+               style={{
+                  width: LEVEL_END_X,
+                  height: GAME_HEIGHT,
+                  transform: `scale(${worldScale})`,
+                  transformOrigin: 'top left',
+               }}
+            >
+               <div className="position-absolute top-0 start-0" style={{ width: LEVEL_END_X, height: GAME_HEIGHT, transform: `translateX(${-cameraX}px)` }}>
+                  {/* Draw Platforms */}
+                  {LEVEL.platforms.map(p => (
+                      <div key={p.id} className="position-absolute shadow-sm" style={{ left: p.x, top: p.y }}>
+                         <PlatformSprite width={p.w} height={p.h} />
+                      </div>
+                  ))}
 
-               {/* Draw Items */}
-               {items.filter(i => !i.collected).map(i => (
-                   <div key={i.id} className="position-absolute" style={{ left: i.x, top: i.y }}>
-                      {i.type === 'sausage' ? <SausageSprite /> : <SteakSprite />}
-                   </div>
-               ))}
+                  {/* Draw Items */}
+                  {items.filter(i => !i.collected).map(i => (
+                      <div key={i.id} className="position-absolute" style={{ left: i.x, top: i.y }}>
+                         {i.type === 'sausage' ? <SausageSprite /> : <SteakSprite />}
+                      </div>
+                  ))}
 
-               {/* Draw Waschbären */}
-               {enemies.filter(e => !e.dead).map(e => (
-                   <div key={e.id} className="position-absolute" style={{ left: e.x, top: e.y }}>
-                      <RaccoonSprite direction={e.dir} />
-                   </div>
-               ))}
+                  {/* Draw Waschbären */}
+                  {enemies.filter(e => !e.dead).map(e => (
+                      <div key={e.id} className="position-absolute" style={{ left: e.x, top: e.y }}>
+                         <RaccoonSprite direction={e.dir} />
+                      </div>
+                  ))}
 
-               {/* Draw Player */}
-               <div className="position-absolute" style={{ left: player.x, top: player.y, zIndex: 10 }}>
-                   <CharacterSprite shirt="#ffd700" hair="#333" gender="M" isPlayer={true} />
+                  {/* Draw Player */}
+                  <div className="position-absolute" style={{ left: player.x, top: player.y, zIndex: 10 }}>
+                      <CharacterSprite shirt="#ffd700" hair="#333" gender="M" isPlayer={true} />
+                  </div>
+
+                  {/* Goal Area (Jörg waiting) */}
+                  <div className="position-absolute d-flex flex-column align-items-center" style={{ left: 3350, top: GROUND_Y - 58 }}>
+                      <div className="bg-white px-2 py-0 rounded text-dark fw-bold shadow-sm" style={{ fontSize: '0.8rem', opacity: 0.9 }}>Jörg</div>
+                      <CharacterSprite shirt="#8B0000" hair="#8b4513" gender="M" />
+                  </div>
                </div>
-
-               {/* Goal Area (Jörg waiting) */}
-               <div className="position-absolute d-flex flex-column align-items-center" style={{ left: 3350, top: GROUND_Y - 58 }}>
-                   <div className="bg-white px-2 py-0 rounded text-dark fw-bold shadow-sm" style={{ fontSize: '0.8rem', opacity: 0.9 }}>Jörg</div>
-                   <CharacterSprite shirt="#8B0000" hair="#8b4513" gender="M" />
-               </div>
+            </div>
         </div>
       </div>
 
@@ -411,7 +427,7 @@ export default function GrillpartyPlatformer({
 
       {/* Mobile Joypad */}
          {showMobileControls && !requiresLandscape && (
-            <div className="position-absolute bottom-0 w-100" style={{ zIndex: 50 }}>
+            <div className="position-absolute bottom-0 w-100" style={{ zIndex: 50, height: mobileControlZoneHeight ? `${mobileControlZoneHeight}px` : undefined }}>
                 <Joypad mode="platformer" onMove={handleJoyMove} onJump={handleJoyJump} />
             </div>
          )}
