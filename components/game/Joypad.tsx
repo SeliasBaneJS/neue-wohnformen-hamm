@@ -80,8 +80,8 @@ export default function Joypad({
       <div className="glass-panel-dark px-3 py-2 d-flex flex-column align-items-center gap-2" style={{ pointerEvents: 'auto' }}>
         <span className="small text-uppercase text-white opacity-75">Aktion</span>
         <button 
-          className="btn btn-primary rounded-circle shadow fw-bold fs-5 text-uppercase" 
-          style={{ width: '92px', height: '92px', touchAction: 'manipulation' }}
+          className="btn btn-primary rounded-circle shadow fw-bold" 
+          style={{ width: '92px', height: '92px', touchAction: 'manipulation', fontSize: '0.85rem', lineHeight: 1.1, padding: '0.35rem' }}
           onPointerDown={onInteract}
         >
           {actionLabel}

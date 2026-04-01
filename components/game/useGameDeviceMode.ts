@@ -12,6 +12,23 @@ type GameDeviceMode = {
 
 const MOBILE_PREVIEW_QUERY = 'mobilePreview';
 
+function isMobileUserAgent(): boolean {
+  if (typeof navigator === 'undefined') {
+    return false;
+  }
+
+  if ('userAgentData' in navigator && navigator.userAgentData?.mobile) {
+    return true;
+  }
+
+  const isIpadLikeDevice = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  if (isIpadLikeDevice) {
+    return true;
+  }
+
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 function readGameDeviceMode(): GameDeviceMode {
   if (typeof window === 'undefined') {
     return {
@@ -25,9 +42,7 @@ function readGameDeviceMode(): GameDeviceMode {
 
   const searchParams = new URLSearchParams(window.location.search);
   const isMobilePreview = searchParams.get(MOBILE_PREVIEW_QUERY) === '1';
-  const hasTouchLikeInput =
-    window.matchMedia('(hover: none), (pointer: coarse)').matches ||
-    navigator.maxTouchPoints > 0;
+  const isMobileDevice = isMobileUserAgent();
 
   const width = window.innerWidth;
   const height = window.innerHeight;
@@ -36,7 +51,7 @@ function readGameDeviceMode(): GameDeviceMode {
     width,
     height,
     isPortrait: height >= width,
-    showMobileControls: isMobilePreview || hasTouchLikeInput,
+    showMobileControls: isMobilePreview || isMobileDevice,
     isMobilePreview,
   };
 }
