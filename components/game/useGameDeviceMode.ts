@@ -10,6 +10,12 @@ type GameDeviceMode = {
   isMobilePreview: boolean;
 };
 
+type NavigatorWithUserAgentData = Navigator & {
+  userAgentData?: {
+    mobile?: boolean;
+  };
+};
+
 const MOBILE_PREVIEW_QUERY = 'mobilePreview';
 
 function isMobileUserAgent(): boolean {
@@ -17,7 +23,9 @@ function isMobileUserAgent(): boolean {
     return false;
   }
 
-  if ('userAgentData' in navigator && navigator.userAgentData?.mobile) {
+  const navigatorWithUserAgentData = navigator as NavigatorWithUserAgentData;
+
+  if (navigatorWithUserAgentData.userAgentData?.mobile) {
     return true;
   }
 
