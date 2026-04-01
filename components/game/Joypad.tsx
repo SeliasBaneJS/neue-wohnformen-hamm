@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useRef, useState } from 'react';
 
 type JoypadProps = {
   mode?: 'topdown' | 'platformer';
@@ -9,7 +9,27 @@ type JoypadProps = {
   actionLabel?: string;
 };
 
+type StickOffset = {
+  x: number;
+  y: number;
+};
+
 const buttonTouchStyle = { touchAction: 'none' as const };
+const analogStickStyle = { touchAction: 'none' as const, width: '112px', height: '112px' };
+const ANALOG_MAX_OFFSET = 30;
+const ANALOG_DEAD_ZONE = 10;
+
+function snapAxis(value: number): -1 | 0 | 1 {
+  if (value > 0.5) {
+    return 1;
+  }
+
+  if (value < -0.5) {
+    return -1;
+  }
+
+  return 0;
+}
 
 export default function Joypad({
   mode = 'topdown',
@@ -18,6 +38,10 @@ export default function Joypad({
   onJump = () => {},
   actionLabel = 'Aktion',
 }: JoypadProps) {
+  const [stickOffset, setStickOffset] = useState<StickOffset>({ x: 0, y: 0 });
+  const [isStickActive, setIsStickActive] = useState(false);
+  const analogStickRef = useRef<HTMLDivElement>(null);
+  const activePointerIdRef = useRef<number | null>(null);
   const stopMoving = () => onMove(0, 0);
   const createMoveHandlers = (dx: number, dy: number) => ({
     onPointerDown: () => onMove(dx, dy),
@@ -27,6 +51,75 @@ export default function Joypad({
   });
 
   const padStyle = 'btn btn-dark bg-opacity-75 rounded-circle shadow fw-bold text-white fs-4 d-flex align-items-center justify-content-center border-0';
+
+  const resetAnalogStick = () => {
+    activePointerIdRef.current = null;
+    setIsStickActive(false);
+    setStickOffset({ x: 0, y: 0 });
+    stopMoving();
+  };
+
+  const updateAnalogStick = (clientX: number, clientY: number) => {
+    if (!analogStickRef.current) {
+      return;
+    }
+
+    const rect = analogStickRef.current.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const rawX = clientX - centerX;
+    const rawY = clientY - centerY;
+    const distance = Math.hypot(rawX, rawY);
+    const limitedDistance = distance > 0 ? Math.min(distance, ANALOG_MAX_OFFSET) : 0;
+    const offsetScale = distance > 0 ? limitedDistance / distance : 0;
+    const knobX = rawX * offsetScale;
+    const knobY = rawY * offsetScale;
+
+    setStickOffset({ x: knobX, y: knobY });
+
+    if (distance < ANALOG_DEAD_ZONE) {
+      stopMoving();
+      return;
+    }
+
+    const snappedAngle = Math.round(Math.atan2(rawY, rawX) / (Math.PI / 4)) * (Math.PI / 4);
+    onMove(snapAxis(Math.cos(snappedAngle)), snapAxis(Math.sin(snappedAngle)));
+  };
+
+  const handleAnalogPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    activePointerIdRef.current = event.pointerId;
+    setIsStickActive(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+    updateAnalogStick(event.clientX, event.clientY);
+  };
+
+  const handleAnalogPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) {
+      return;
+    }
+
+    updateAnalogStick(event.clientX, event.clientY);
+  };
+
+  const handleAnalogPointerRelease = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) {
+      return;
+    }
+
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+
+    resetAnalogStick();
+  };
+
+  const handleAnalogPointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (activePointerIdRef.current !== event.pointerId) {
+      return;
+    }
+
+    resetAnalogStick();
+  };
 
   if (mode === 'platformer') {
     return (
@@ -62,17 +155,48 @@ export default function Joypad({
 
   return (
     <div className="d-flex w-100 justify-content-between align-items-end px-3 pb-3 pt-2" style={{ pointerEvents: 'none' }}>
-      {/* D-Pad Left Side */}
-      <div className="glass-panel-dark p-2" style={{ pointerEvents: 'auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 60px)', gridTemplateRows: 'repeat(3, 60px)', gap: '8px' }}>
-          <div />
-          <button className={padStyle} style={buttonTouchStyle} {...createMoveHandlers(0, -1)}>↑</button>
-          <div />
-          <button className={padStyle} style={buttonTouchStyle} {...createMoveHandlers(-1, 0)}>←</button>
-          <div className="rounded-circle bg-white bg-opacity-25" />
-          <button className={padStyle} style={buttonTouchStyle} {...createMoveHandlers(1, 0)}>→</button>
-          <div />
-          <button className={padStyle} style={buttonTouchStyle} {...createMoveHandlers(0, 1)}>↓</button>
+      {/* Analog Stick Left Side */}
+      <div className="glass-panel-dark px-3 py-2 d-flex flex-column align-items-center gap-2" style={{ pointerEvents: 'auto' }}>
+        <span className="small text-uppercase text-white opacity-75">Steuern</span>
+        <div
+          ref={analogStickRef}
+          className="position-relative rounded-circle shadow"
+          style={{
+            ...analogStickStyle,
+            background: 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.22), rgba(255,255,255,0.08) 45%, rgba(0,0,0,0.25) 100%)',
+            border: '1px solid rgba(255,255,255,0.12)',
+            boxShadow: 'inset 0 6px 18px rgba(255,255,255,0.12), inset 0 -10px 24px rgba(0,0,0,0.25)',
+          }}
+          onPointerDown={handleAnalogPointerDown}
+          onPointerMove={handleAnalogPointerMove}
+          onPointerUp={handleAnalogPointerRelease}
+          onPointerCancel={handleAnalogPointerCancel}
+          onLostPointerCapture={resetAnalogStick}
+        >
+          <div
+            className="position-absolute top-50 start-50 rounded-circle"
+            style={{ width: '70px', height: '70px', border: '1px solid rgba(255,255,255,0.14)', transform: 'translate(-50%, -50%)' }}
+          />
+          <div
+            className="position-absolute top-50 start-50"
+            style={{ width: '66px', height: '1px', backgroundColor: 'rgba(255,255,255,0.12)', transform: 'translate(-50%, -50%)' }}
+          />
+          <div
+            className="position-absolute top-50 start-50"
+            style={{ width: '1px', height: '66px', backgroundColor: 'rgba(255,255,255,0.12)', transform: 'translate(-50%, -50%)' }}
+          />
+          <div
+            className="position-absolute top-50 start-50 rounded-circle"
+            style={{
+              width: '46px',
+              height: '46px',
+              background: 'linear-gradient(145deg, rgba(255,255,255,0.95), rgba(208,218,230,0.88))',
+              border: '1px solid rgba(255,255,255,0.35)',
+              boxShadow: '0 10px 20px rgba(0,0,0,0.25)',
+              transform: `translate(calc(-50% + ${stickOffset.x}px), calc(-50% + ${stickOffset.y}px))`,
+              transition: isStickActive ? 'none' : 'transform 120ms ease-out',
+            }}
+          />
         </div>
       </div>
 
