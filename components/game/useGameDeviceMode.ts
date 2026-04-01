@@ -16,6 +16,15 @@ type NavigatorWithUserAgentData = Navigator & {
   };
 };
 
+type FullscreenDocument = Document & {
+  webkitExitFullscreen?: () => Promise<void> | void;
+  webkitFullscreenElement?: Element | null;
+};
+
+type FullscreenCapableElement = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void;
+};
+
 const MOBILE_PREVIEW_QUERY = 'mobilePreview';
 
 function isMobileUserAgent(): boolean {
@@ -79,6 +88,60 @@ export function useGameDeviceMode(): GameDeviceMode {
   }, []);
 
   return mode;
+}
+
+export function getFullscreenElement(): Element | null {
+  if (typeof document === 'undefined') {
+    return null;
+  }
+
+  const fullscreenDocument = document as FullscreenDocument;
+  return fullscreenDocument.fullscreenElement ?? fullscreenDocument.webkitFullscreenElement ?? null;
+}
+
+export async function requestElementFullscreen(element: HTMLElement): Promise<boolean> {
+  const fullscreenElement = element as FullscreenCapableElement;
+
+  try {
+    if (fullscreenElement.requestFullscreen) {
+      await fullscreenElement.requestFullscreen();
+      return true;
+    }
+  } catch {
+    // Ignore and fall back to prefixed APIs where available.
+  }
+
+  try {
+    if (fullscreenElement.webkitRequestFullscreen) {
+      await fullscreenElement.webkitRequestFullscreen();
+      return true;
+    }
+  } catch {
+    // Some mobile browsers do not support fullscreen or require a stricter gesture context.
+  }
+
+  return false;
+}
+
+export async function exitFullscreenIfActive(): Promise<void> {
+  if (typeof document === 'undefined') {
+    return;
+  }
+
+  const fullscreenDocument = document as FullscreenDocument;
+
+  try {
+    if (fullscreenDocument.fullscreenElement && fullscreenDocument.exitFullscreen) {
+      await fullscreenDocument.exitFullscreen();
+      return;
+    }
+
+    if (fullscreenDocument.webkitFullscreenElement && fullscreenDocument.webkitExitFullscreen) {
+      await fullscreenDocument.webkitExitFullscreen();
+    }
+  } catch {
+    // Exiting fullscreen should fail silently when the browser rejects the request.
+  }
 }
 
 type ScreenOrientationWithLock = ScreenOrientation & {

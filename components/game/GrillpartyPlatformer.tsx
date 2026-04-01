@@ -48,9 +48,17 @@ const PLAYER_H = 48;
 
 type PlatformerProps = {
   onWin: (score: number) => void;
+   isFullscreenActive?: boolean;
+   isFullscreenBlocked?: boolean;
+   onRequestFullscreen?: () => void;
 };
 
-export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
+export default function GrillpartyPlatformer({
+   onWin,
+   isFullscreenActive = false,
+   isFullscreenBlocked = false,
+   onRequestFullscreen,
+}: PlatformerProps) {
   const [player, setPlayer] = useState({ x: 100, y: 100, vx: 0, vy: 0, grounded: false });
   const [items, setItems] = useState(LEVEL.items);
   const [enemies, setEnemies] = useState(LEVEL.enemies);
@@ -281,11 +289,11 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
          ref={containerRef}
       className="position-relative overflow-hidden user-select-none shadow" 
          style={{
-            height: showMobileControls ? 'clamp(320px, 72vh, 420px)' : '600px',
-            minHeight: showMobileControls ? '320px' : '600px',
+            height: showMobileControls ? (isFullscreenActive ? '100dvh' : 'clamp(320px, 72vh, 420px)') : '600px',
+            minHeight: showMobileControls ? (isFullscreenActive ? '100dvh' : '320px') : '600px',
             backgroundColor: '#87CEEB',
-            border: '5px solid #1976D2',
-            borderRadius: '12px',
+            border: isFullscreenActive ? '0' : '5px solid #1976D2',
+            borderRadius: isFullscreenActive ? '0' : '12px',
          }}
     >
       {/* Background Parallax Layer */}
@@ -343,14 +351,26 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
       </div>
 
       {/* UI Overlay */}
-      <div className="position-absolute top-0 start-0 m-3 d-flex justify-content-between w-100" style={{ paddingRight: '20px' }}>
-         <div className="bg-dark bg-opacity-75 text-white px-3 py-2 rounded shadow">
-           <h3 className="h6 fw-bold m-0 text-uppercase letter-spacing-1 text-warning">Die Wurst-Jagd</h3>
-           <span className="fw-bold">Punkte: {score}</span>
-           {showMobileControls && gameState === 'playing' && !requiresLandscape && (
-                   <div className="small opacity-75 mt-1">Laufen links, Springen rechts.</div>
-           )}
-         </div>
+         <div className="position-absolute top-0 start-0 m-3 d-flex justify-content-between align-items-start w-100 gap-3" style={{ paddingRight: '20px' }}>
+             <div className="bg-dark bg-opacity-75 text-white px-3 py-2 rounded shadow">
+                <h3 className="h6 fw-bold m-0 text-uppercase letter-spacing-1 text-warning">Die Wurst-Jagd</h3>
+                <span className="fw-bold">Punkte: {score}</span>
+                {showMobileControls && gameState === 'playing' && !requiresLandscape && (
+                            <div className="small opacity-75 mt-1">Laufen links, Springen rechts.</div>
+                )}
+             </div>
+             {showMobileControls && !requiresLandscape && !isFullscreenActive && (
+                  <div className="d-flex flex-column align-items-end gap-2" style={{ maxWidth: '250px' }}>
+                     <button className="btn btn-light btn-sm rounded-pill px-3 shadow-sm fw-semibold" onClick={onRequestFullscreen}>
+                        Vollbild
+                     </button>
+                     {isFullscreenBlocked && (
+                        <div className="small text-white bg-dark bg-opacity-75 rounded-4 px-3 py-2 shadow text-end">
+                           Gerade auf iPhone und Safari kann Vollbild blockiert sein. Dann einfach im Querformat weiterspielen.
+                        </div>
+                     )}
+                  </div>
+             )}
       </div>
 
       {requiresLandscape && (
@@ -359,9 +379,14 @@ export default function GrillpartyPlatformer({ onWin }: PlatformerProps) {
                <div className="display-4 mb-3">↻</div>
                <h2 className="h3 fw-bold text-primary mb-3">Bitte ins Querformat drehen</h2>
                <p className="mb-4 text-secondary">Die Wurst-Jagd wird auf dem Handy horizontal gespielt. Nach dem Drehen laeuft das Jump-and-Run automatisch weiter.</p>
-               <button className="btn btn-light btn-lg rounded-pill px-4 shadow-sm" onClick={() => { void requestLandscapeOrientation(); }}>
-                 Querformat anfordern
+                      <button className="btn btn-light btn-lg rounded-pill px-4 shadow-sm" onClick={() => { onRequestFullscreen?.(); void requestLandscapeOrientation(); }}>
+                         {isFullscreenActive ? 'Querformat anfordern' : 'Querformat und Vollbild'}
                </button>
+                      {isFullscreenBlocked && (
+                         <p className="small text-secondary mb-0 mt-3">
+                            Gerade auf iPhone und Safari kann Vollbild blockiert sein. Dann einfach im Querformat weiterspielen.
+                         </p>
+                      )}
             </div>
          </div>
       )}

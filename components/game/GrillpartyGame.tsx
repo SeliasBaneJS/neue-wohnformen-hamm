@@ -5,7 +5,7 @@ import { CHARACTERS, OBSTACLES, GAME_BOUNDS, ITEMS, ItemData, CharacterData } fr
 import { CharacterSprite, GrillSprite, TreeSprite, PropSprite } from './SVGSprites';
 import Joypad from './Joypad';
 import GrillpartyPlatformer from './GrillpartyPlatformer';
-import { requestLandscapeOrientation, useGameDeviceMode } from './useGameDeviceMode';
+import { exitFullscreenIfActive, getFullscreenElement, requestElementFullscreen, requestLandscapeOrientation, useGameDeviceMode } from './useGameDeviceMode';
 
 const PLAYER_SPEED = 300; // px per second
 
@@ -14,6 +14,8 @@ export default function GrillpartyGame() {
   const [dialogue, setDialogue] = useState<{name: string, text: string} | null>(null);
   const [viewport, setViewport] = useState({ w: 800, h: 600 });
   const [isPlatforming, setIsPlatforming] = useState(false);
+  const [isFullscreenActive, setIsFullscreenActive] = useState(false);
+  const [isFullscreenBlocked, setIsFullscreenBlocked] = useState(false);
   const { showMobileControls } = useGameDeviceMode();
 
   // Game/Quest State
@@ -28,12 +30,45 @@ export default function GrillpartyGame() {
 
   const keys = useRef<{ [key: string]: boolean }>({});
   const joyVector = useRef({ dx: 0, dy: 0 });
+  const gameShellRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef(player);
 
   useEffect(() => {
     playerRef.current = player;
   }, [player]);
+
+  useEffect(() => {
+    const updateFullscreenState = () => {
+      const fullscreenElement = getFullscreenElement();
+      const isActive = Boolean(
+        fullscreenElement &&
+        gameShellRef.current &&
+        gameShellRef.current.contains(fullscreenElement)
+      );
+
+      setIsFullscreenActive(isActive);
+
+      if (isActive) {
+        setIsFullscreenBlocked(false);
+      }
+    };
+
+    updateFullscreenState();
+    document.addEventListener('fullscreenchange', updateFullscreenState);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenState);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', updateFullscreenState);
+      document.removeEventListener('webkitfullscreenchange', updateFullscreenState);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isPlatforming && isFullscreenActive) {
+      void exitFullscreenIfActive();
+    }
+  }, [isFullscreenActive, isPlatforming]);
 
   // Resize listener for camera
   useEffect(() => {
@@ -305,7 +340,24 @@ export default function GrillpartyGame() {
     handleItemPickup();
   };
 
+  const requestPlatformerFullscreen = () => {
+    if (!showMobileControls || !gameShellRef.current) {
+      setIsFullscreenBlocked(false);
+      return;
+    }
+
+    setIsFullscreenBlocked(false);
+
+    void requestElementFullscreen(gameShellRef.current).then((enteredFullscreen) => {
+      if (!enteredFullscreen) {
+        setIsFullscreenBlocked(true);
+      }
+    });
+  };
+
   const startPlatformer = () => {
+    setIsFullscreenBlocked(false);
+    requestPlatformerFullscreen();
     void requestLandscapeOrientation();
     setDialogue(null);
     setIsPlatforming(true);
@@ -315,31 +367,38 @@ export default function GrillpartyGame() {
   const camX = Math.max(0, Math.min(GAME_BOUNDS.width - viewport.w, player.x - viewport.w / 2));
   const camY = Math.max(0, Math.min(GAME_BOUNDS.height - viewport.h, player.y - viewport.h / 2));
 
-  if (isPlatforming) {
-    return (
-      <GrillpartyPlatformer onWin={(score) => {
-        setIsPlatforming(false);
-        setInventory(inv => inv.filter(i => i !== 'coal'));
-        setQuestState(s => ({ ...s, grillLit: true }));
-        // Spawn next to Jörg after the jump'n'run
-        setPlayer({ x: 780, y: 740 });
-        setDialogue({ name: 'Jörg', text: `Wahnsinn! Du hast die Würstchen gerettet und ${score} Punkte gesammelt! Ab auf den Grill damit!` });
-      }} />
-    );
-  }
-
   return (
-    <div 
-      className="position-relative overflow-hidden user-select-none shadow" 
-      style={{
-        height: showMobileControls ? 'min(70vh, 560px)' : '75vh',
-        minHeight: showMobileControls ? '360px' : '500px',
-        borderRadius: '12px',
-        border: '5px solid #2e7d32',
-        backgroundColor: '#7cb342',
-      }}
-      ref={containerRef}
+    <div
+      ref={gameShellRef}
+      className="position-relative"
+      style={isPlatforming && isFullscreenActive ? { width: '100%', height: '100dvh', overflow: 'hidden', backgroundColor: '#87CEEB' } : undefined}
     >
+      {isPlatforming ? (
+        <GrillpartyPlatformer
+          isFullscreenActive={isFullscreenActive}
+          isFullscreenBlocked={isFullscreenBlocked}
+          onRequestFullscreen={requestPlatformerFullscreen}
+          onWin={(score) => {
+            void exitFullscreenIfActive();
+            setIsPlatforming(false);
+            setInventory(inv => inv.filter(i => i !== 'coal'));
+            setQuestState(s => ({ ...s, grillLit: true }));
+            setPlayer({ x: 780, y: 740 });
+            setDialogue({ name: 'Jörg', text: `Wahnsinn! Du hast die Würstchen gerettet und ${score} Punkte gesammelt! Ab auf den Grill damit!` });
+          }}
+        />
+      ) : (
+        <div 
+          className="position-relative overflow-hidden user-select-none shadow" 
+          style={{
+            height: showMobileControls ? 'min(70vh, 560px)' : '75vh',
+            minHeight: showMobileControls ? '360px' : '500px',
+            borderRadius: '12px',
+            border: '5px solid #2e7d32',
+            backgroundColor: '#7cb342',
+          }}
+          ref={containerRef}
+        >
       <div 
         className="position-absolute"
         style={{
@@ -517,6 +576,8 @@ export default function GrillpartyGame() {
             <h3 className="fw-bold mb-2">🎉 Geschafft!</h3>
             <p className="small mb-0">Alle Quests abgeschlossen! Der Grill brennt, Hans hat angestoßen und der Nudelsalat ist auf dem Tisch. Perfekte Grillparty am Kentroper Weg!</p>
           </div>
+        </div>
+      )}
         </div>
       )}
     </div>
