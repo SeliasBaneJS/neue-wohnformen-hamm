@@ -5,14 +5,32 @@
   force = true
 
 [[redirects]]
+  from = "/portal2"
+  to = "https://chat.neue-wohnformen-hamm.de/portal2/"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/portal/api/*"
   to = "https://chat.neue-wohnformen-hamm.de/portal/api/:splat"
   status = 200
   force = true
 
 [[redirects]]
+  from = "/portal2/api/*"
+  to = "https://chat.neue-wohnformen-hamm.de/portal2/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/portal/*"
   to = "https://chat.neue-wohnformen-hamm.de/portal/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/portal2/*"
+  to = "https://chat.neue-wohnformen-hamm.de/portal2/:splat"
   status = 200
   force = true
 
