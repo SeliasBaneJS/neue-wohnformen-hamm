@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:netlify": "npx netlify dev --context production",
     "build": "next build",
     "start": "serve out",
     "lint": "eslint"

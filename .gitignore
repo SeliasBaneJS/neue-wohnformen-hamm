@@ -43,3 +43,7 @@ next-env.d.ts
 # project specific
 /mehrgen_res/
 /temp-app - Kopie/
+
+# Local Netlify folder
+.netlify
+deno.lock

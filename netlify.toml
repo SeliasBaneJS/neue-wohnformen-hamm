@@ -1,3 +1,28 @@
+[[redirects]]
+  from = "/portal"
+  to = "https://chat.neue-wohnformen-hamm.de/portal/"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/portal/api/*"
+  to = "https://chat.neue-wohnformen-hamm.de/portal/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/portal/*"
+  to = "https://chat.neue-wohnformen-hamm.de/portal/:splat"
+  status = 200
+  force = true
+
+[dev]
+  command = "npm run dev -- --hostname 0.0.0.0 --port 3001"
+  framework = "#custom"
+  port = 8888
+  targetPort = 3001
+  autoLaunch = false
+
 [build]
   command = "npm run build"
   publish = "out"
